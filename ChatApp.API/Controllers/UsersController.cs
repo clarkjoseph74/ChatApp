@@ -1,6 +1,9 @@
-﻿using ChatApp.API.Interfaces;
+﻿using AutoMapper;
+using ChatApp.API.DTOs;
+using ChatApp.API.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace ChatApp.API.Controllers;
 [Route("api/[controller]")]
@@ -8,9 +11,12 @@ namespace ChatApp.API.Controllers;
 public class UsersController : ControllerBase
 {
     private readonly IUserRepository _repo;
-    public UsersController(IUserRepository repo)
+    private readonly IMapper _mapper;
+
+    public UsersController(IUserRepository repo, IMapper mapper)
     {
         _repo = repo;
+        _mapper = mapper;
     }
     [AllowAnonymous]
     [HttpGet]
@@ -31,5 +37,15 @@ public class UsersController : ControllerBase
     public async Task<IActionResult> GetUserByname(string username)
     {
         return Ok(await _repo.GetMemberByNameAsync(username));
+    }
+    [HttpPut]
+    public async Task<IActionResult> UpdateUser(UpdateUserDto dto)
+    {
+        var username = HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var user = await _repo.GetByNameAsync(username!);
+        _mapper.Map(dto, user);
+        _repo.Update(user);
+        if (await _repo.SaveAllAsync()) return NoContent();
+        return BadRequest("Error While Updating the user");
     }
 }

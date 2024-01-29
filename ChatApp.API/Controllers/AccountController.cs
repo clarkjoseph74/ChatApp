@@ -66,20 +66,27 @@ public class AccountController : ControllerBase
     [HttpPost("login")]
     public async Task<IActionResult> Login(LoginDto loginDto)
     {
-        var user = await _context.Users.SingleOrDefaultAsync(u => u.UserName == loginDto.UserName.ToLower());
-        if (user == null) return Unauthorized("Invalid creadintials");
-        using var hmac = new HMACSHA512(user.PasswordSalt);
-        var computedHash = hmac.ComputeHash(Encoding.UTF8.GetBytes(loginDto.Password));
-        for (int i = 0; i < computedHash.Length; i++)
+        try
         {
-            if (computedHash[i] != user.PasswordHash[i]) return Unauthorized("Invalid creadintials");
+            var user = await _context.Users.SingleOrDefaultAsync(u => u.UserName == loginDto.UserName.ToLower());
+            if (user == null) return Unauthorized("Invalid creadintials");
+            using var hmac = new HMACSHA512(user.PasswordSalt);
+            var computedHash = hmac.ComputeHash(Encoding.UTF8.GetBytes(loginDto.Password));
+            for (int i = 0; i < computedHash.Length; i++)
+            {
+                if (computedHash[i] != user.PasswordHash[i]) return Unauthorized("Invalid creadintials");
+            }
+            var userDto = new UserDto
+            {
+                Username = user.UserName,
+                Token = _tokenService.CreateToken(user)
+            };
+            return Ok(userDto);
         }
-        var userDto = new UserDto
+        catch
         {
-            Username = user.UserName,
-            Token = _tokenService.CreateToken(user)
-        };
-        return Ok(userDto);
+            return Unauthorized("Invalid creadintials");
+        }
     }
     private async Task<bool> UserExists(string username)
     {
