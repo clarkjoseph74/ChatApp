@@ -1,4 +1,5 @@
-﻿using ChatApp.API.Data;
+﻿using AutoMapper;
+using ChatApp.API.Data;
 using ChatApp.API.DTOs;
 using ChatApp.API.Entities;
 using ChatApp.API.Interfaces;
@@ -14,11 +15,12 @@ public class AccountController : ControllerBase
 {
     private readonly ApplicationDbContext _context;
     private readonly ITokenService _tokenService;
-
-    public AccountController(ApplicationDbContext context, ITokenService tokenService)
+    private readonly IMapper _mapper;
+    public AccountController(ApplicationDbContext context, ITokenService tokenService, IMapper mapper)
     {
         _context = context;
         _tokenService = tokenService;
+        _mapper = mapper;
     }
 
     [HttpPost("register")]
@@ -79,7 +81,7 @@ public class AccountController : ControllerBase
             var userDto = new UserDto
             {
                 Username = user.UserName,
-                Token = _tokenService.CreateToken(user)
+                Token = _tokenService.CreateToken(user),
             };
             return Ok(userDto);
         }

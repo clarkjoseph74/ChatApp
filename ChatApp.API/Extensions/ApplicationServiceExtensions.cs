@@ -11,16 +11,19 @@ public static class ApplicationServiceExtensions
 {
     public static IServiceCollection AddApplicationServices(this IServiceCollection services, IConfiguration config)
     {
+        services.Configure<CloudinarySettings>(config.GetSection("CloudinarySettings"));
         //DB Service
         services.AddDbContext<ApplicationDbContext>(
              options => options.UseSqlite(config.GetConnectionString("DefaultConnection"))
         );
         //Add My Contracts & Implementations
+        services.AddScoped<IPhotoService, PhotoService>();
 
         services.AddScoped<ITokenService, TokenService>();
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddSingleton<ExceptionMiddleware>();
         services.AddAutoMapper(typeof(AutoMapperProfiles).Assembly);
+
 
         return services;
     }
